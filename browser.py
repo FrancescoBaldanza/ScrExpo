@@ -1,53 +1,47 @@
-from bs4 import BeautifulSoup
+from dataset import Dataset
+from bs4 import BeautifulSoup, PageElement
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
+# TODO: funzione che restitusca l'url assoluto invece di quello relativo
+
 class Browser:
-    def __init__(self, url):
-        self.url = url
+    def __init__(self):
         self.driver = webdriver.Chrome()
-        self.driver.get(self.url)
-        self.details = []
         self.data = []
 
 
+    def get_data(self, dataset: Dataset):
+        self.driver.get(dataset.url)
+        if dataset.detail_pages.external:
+            details_pages = self.scrape_pages(dataset.detail_pages.selector, dataset.more)
+            if dataset.next_page:
+                for _ in range(dataset.next_page["clicks"]):
+                    details_pages.extend(self.scrape_pages(dataset.detail_pages.selector, dataset.more))
 
-    def get_data(self, names: list[str], selectors: list[str], types: list[str]):
-        self.driver.get(self.url)
-        # Se ad una colonna allora rendi tutto visibile ed estrai, se a più colonne allora per ogni colonna assicura che tutto sia visibile e poi estrai.
-        # TODO: Scarica pagina
-        # if next_page:
-            # for _ in range(next_page["clicks"]):
-                # TODO: Scarica pagina
-
-        # if external:
-            # for detail in details
-
-
-        # TODO:
+            for page in details_pages:
+                ...
 
 
-    def scrape_page(self, selector: str, more: str | None, internal_details=False) -> None:
+
+    def scrape_pages(self, selector: str, more: str | None) -> list[PageElement]:
         elements = set()
         while True:
             prev_elements_len = len(elements)
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            for element in soup.select(selector):
+            for element in soup.find_all(selector):
+                element = element.get("href")
                 elements.add(element)
             if more and len(elements) != prev_elements_len:
                 self.driver.find_element(more).click()
                 wait = WebDriverWait(self.driver, 10)
                 wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "myButton")))
-            elif internal_details:
-                ... #TODO clicca e raccogli i dati in self.data nei dettagli
-                return None
             else:
-                for element in elements:
-                    self.details.append(element.get("href"))
-                return None
+                return list(elements)
+
 
     def scrape_details(self):
         ...
