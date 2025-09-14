@@ -5,8 +5,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-
-# TODO: funzione che restitusca l'url assoluto invece di quello relativo
+def absolute_url(home: str, child: str) -> str:
+    from urllib.parse import urljoin, urlparse
+    parsed_child = urlparse(child)
+    if parsed_child.scheme and parsed_child.netloc:
+        return child
+    return urljoin(home, child)
 
 class Browser:
     def __init__(self):
